@@ -1,11 +1,12 @@
 import mal
 from vk_config import vk_token,group_id
+import rss
 import os
 import requests
 import pyquery
 import json   
 from datetime import datetime
-from threading import Timer
+from threading import Timer, Thread
 import random
 from vk_api import VkApi, VkUpload
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
@@ -104,9 +105,10 @@ for event in longpoll.listen():
             message="""Добро пожловать в наш уютный чатик!
 Список команд:
 /help - помощь.
-/bind [MAL-username] - привязка MAL-аккаунта к беседе по имени профиля.
+/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.
 /nakama - Получить список МАЛа собеседников.
 /mustw - (пока что) ссылка на MUSTWATCH список
 /roll - Рандомный тайтл из Вашего ПТВ
+/rss <channel> [filter] - СКОРО!
 """
             send_msg(int(event.chat_id),message)
