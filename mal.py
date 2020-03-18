@@ -11,19 +11,17 @@ def get_user(user,req,arg,param=None):
     return jikan.user(username=user,request=req,argument=arg,parameters=param)
 
 def roll_ptw(usr):
-    lst = get_user(usr,"animelist","plantowatch")['anime']
     newList = []
-    for i in lst:
+    for i in get_user(usr,"animelist","plantowatch")['anime']:
         if i['airing_status']==2:
             newList.append(i)
             continue
     return random.choice(newList)
 
 def get_ongoing(usr):
-    lst = get_user(usr,"animelist","watching")['anime']
     newList = []
-    for i in lst:
+    for i in get_user(usr,"animelist","watching")['anime']:
         if i['airing_status']==1:
-            newList.append(i)
+            newList.append(i['title'])
             continue
     return newList
