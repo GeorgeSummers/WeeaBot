@@ -97,7 +97,8 @@ for event in longpoll.listen():
                 lst[str(event.obj.from_id)] = res
                 file.seek(0) 
                 json.dump(lst,file)
-                msg="Список Ваших онгоингов получен успешно!\nДля настройки рассылки доступны следующие команды:\nComing Soon!"
+                file.truncate()
+            msg="Список Ваших онгоингов получен успешно!\nДля настройки рассылки доступны следующие команды:\nComing Soon!"
             send_msg(int(event.chat_id),msg)
 
         if event.obj.text == "/help":
