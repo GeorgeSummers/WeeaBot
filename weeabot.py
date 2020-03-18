@@ -39,8 +39,11 @@ longpoll = VkBotLongPoll(vk_session, group_id)
 
 vk = vk_session.get_api()
 upload=VkUpload(vk_session)
+
+print('Running WeeaBot...\n')
+
 for event in longpoll.listen():
-    print(event)
+    print(event +'\n')
     if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat:
         
         if event.obj.from_id == 38705372 and HinoCount == 10:
@@ -49,7 +52,7 @@ for event in longpoll.listen():
             if HinoCount == 0:
                 HinoCount = 10
 
-        if event.obj.text[:5] == '/bind':
+        if event.obj.text[:5].lower() == '/bind':
             print('Binding MAL')
             usr =  event.obj.text[6:]
             try:
@@ -66,7 +69,7 @@ for event in longpoll.listen():
                 with open("binds.json", 'w') as f:
                     json.dump({str(event.obj.from_id) : usr},f)
 
-        if event.obj.text == "/nakama":
+        if event.obj.text.lower() == "/nakama":
             print('Getting nakamas')
             strn=''
             with open("binds.json", 'r') as file:
@@ -76,10 +79,10 @@ for event in longpoll.listen():
                     strn+=f"{user[0]['first_name']} {user[0]['last_name']} - {mal.url_mal + val}\n"
                 send_msg(int(event.chat_id),"Ссылки на ребят:\n%s" % strn)
 
-        if event.obj.text == "/mustw":
+        if event.obj.text.lower() == "/mustw":
             send_msg(int(event.chat_id),"Ссылка на MUSTWATCH список:",'https://docs.google.com/document/d/1aOsjs9C8mqcOasVvgqwKkzGDTfGHvAKgNWN0x--H6lk/edit')
 
-        if event.obj.text[:5] == "/roll":
+        if event.obj.text[:5].lower() == "/roll":
             data={}
             with open("binds.json", 'r') as file:
                 data = json.load(file)
