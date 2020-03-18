@@ -31,7 +31,7 @@ def get_user_data(uid):
     return vk.users.get(user_ids = int(uid))
 
 print('Running WeeaBot...\n')
-#send_msg(3,"皆のために僕は頑張ります!\n",'photo-117602761_457239211')
+send_msg(3,"皆のために僕は頑張ります!\n",'photo-117602761_457239211')
 
 for event in longpoll.listen():
     print(event.type)
@@ -102,13 +102,5 @@ for event in longpoll.listen():
             send_msg(int(event.chat_id),msg)
 
         if event.obj.text == "/help":
-            message="""Добро пожловать в наш уютный чатик!
-Список команд:
-/help - помощь.
-/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.
-/nakama - Получить список МАЛа собеседников.
-/mustw - (пока что) ссылка на MUSTWATCH список
-/roll - Рандомный тайтл из Вашего ПТВ
-/getrss  - СКОРО!
-"""
+            message="Добро пожловать в наш уютный чатик!\nСписок команд:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\n/getrss  - СКОРО!\n"
             send_msg(int(event.chat_id),message)
