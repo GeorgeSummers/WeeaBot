@@ -22,6 +22,13 @@ def send_msg(chat_id,msg,att=''):
                 attachment=att
                 )
 
+def private_msg(peer_id,msg,att=''):
+    vk.messages.send(
+                peer_id=peer_id,
+                message=msg,
+                attachment=att
+            )
+
 def get_user_data(uid):
     return vk.users.get(user_ids = int(uid))
 
