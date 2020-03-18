@@ -13,6 +13,12 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 HinoCount = 10
 
+vk_session = VkApi(token=vk_token)
+longpoll = VkBotLongPoll(vk_session, group_id)
+
+vk = vk_session.get_api()
+upload=VkUpload(vk_session)
+
 def send_msg(chat_id,msg,att=''):
     random_id = round(random.random() * 10 ** 9)
     vk.messages.send( 
@@ -31,22 +37,6 @@ def private_msg(peer_id,msg,att=''):
 
 def get_user_data(uid):
     return vk.users.get(user_ids = int(uid))
-
-def roll_ptw(usr):
-    lst= mal.get_user(usr,"animelist","plantowatch")['anime']
-    newList = []
-    for i in lst:
-        if i['airing_status']==2:
-            newList.append(i)
-            continue
-    return random.choice(newList)
-
-
-vk_session = VkApi(token=vk_token)
-longpoll = VkBotLongPoll(vk_session, group_id)
-
-vk = vk_session.get_api()
-upload=VkUpload(vk_session)
 
 print('Running WeeaBot...\n')
 send_msg(3,"皆のために僕は頑張ります!\n",'photo-117602761_457239211')
@@ -96,7 +86,7 @@ for event in longpoll.listen():
             data={}
             with open("binds.json", 'r') as file:
                 data = json.load(file)
-            res = roll_ptw(data[str(event.obj.from_id)])
+            res = mal.roll_ptw(data[str(event.obj.from_id)])
             title= res['title']
             stype=res['type']
             eps=res['total_episodes']
