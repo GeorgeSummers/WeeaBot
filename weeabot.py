@@ -42,9 +42,11 @@ vk = vk_session.get_api()
 upload=VkUpload(vk_session)
 
 print('Running WeeaBot...\n')
+send_msg(3,"皆のために僕は頑張ります!\n",'photo-117602761_457239211')
 
 for event in longpoll.listen():
-    print(event +'\n')
+    print(event)
+    print('\n')
     if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat:
         
         if event.obj.from_id == 38705372 and HinoCount == 10:
@@ -73,7 +75,7 @@ for event in longpoll.listen():
         if event.obj.text.lower() == "/nakama":
             print('Getting nakamas')
             strn=''
-            with open("binds.json", 'r') as file:
+            with open("bindings.json", 'r') as file:
                 data = json.load(file)
                 for key,val in data.items():
                     user=get_user_data(key)
@@ -96,10 +98,6 @@ for event in longpoll.listen():
                 image = session.get(res['image_url'].split('?')[0], stream=True)
                 att=upload.photo_messages(photos=image.raw)[0]
                 send_msg(int(event.chat_id),f'{title}\n{stype}, {eps} Episodes\n{url}','photo{}_{}'.format(att['owner_id'], att['id'])) 
-
-
-
-
 
         if event.obj.text == "/help":
             message="""Добро пожловать в наш уютный чатик!
