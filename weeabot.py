@@ -9,13 +9,32 @@ import random
 from vk_api import VkApi, VkUpload
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
+class MyVkBotLongPoll(VkBotLongPoll):
+    def listen(self):
+        while True:
+            try: 
+                for event in self.check():
+                    yield event
+            except Exception as e:
+                print('error', e)
+                init_session()
+                main()
 
 vk_session = VkApi(token=vk_token)
-longpoll = VkBotLongPoll(vk_session, group_id,wait=25)
-
+longpoll = MyVkBotLongPoll(vk_session, group_id,wait=10)
 vk = vk_session.get_api()
 upload=VkUpload(vk_session)
-restart_count=1
+
+def init_session():
+    global vk_session,longpoll,vk,upload 
+    vk_session = VkApi(token=vk_token)
+    longpoll = MyVkBotLongPoll(vk_session, group_id,wait=25)
+    vk = vk_session.get_api()
+    upload=VkUpload(vk_session)
+
+
+
+
 def send_msg(chat_id,msg,att=''):
     random_id = round(random.random() * 10 ** 9)
     vk.messages.send( 
@@ -32,7 +51,7 @@ def get_user_data(uid):
 
 def main():
     print('Running WeeaBot...\n')
-    send_msg(3,"皆のために僕は頑張ります!\n",'photo-117602761_457239211')
+    #send_msg(3,"皆のために僕は頑張ります!\n",'photo-117602761_457239211')
     HinoCount = 10
     for event in longpoll.listen():
         print(event.type)
@@ -105,9 +124,5 @@ def main():
             if event.obj.text == "/help":
                 message="Добро пожловать в наш уютный чатик!\nСписок команд:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\n/getrss  - СКОРО!\n"
                 send_msg(int(event.chat_id),message)
-try:
-    main()
-except requests.exceptions.ReadTimeout:
-    print('uh-oh, timeout!\n Restarts: '+restart_count)
-    restart_count+=1
-    main()
+
+main()
