@@ -9,16 +9,9 @@ import random
 from vk_api import VkApi, VkUpload
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
-
-
 vk_session = VkApi(token=vk_token)
 
 vk = vk_session.get_api()
-
-
-
-
-
 
 def send_msg(chat_id,msg,att=''):
     random_id = round(random.random() * 10 ** 9)
@@ -29,18 +22,16 @@ def send_msg(chat_id,msg,att=''):
                 attachment=att
                 )
 
-
 def get_user_data(uid):
     return vk.users.get(user_ids = int(uid))
 
-
 def main():
-    print('Running WeeaBot...\n')
-    #send_msg(3,"皆のために僕は頑張ります!\n",'photo-117602761_457239211')
+    send_msg(3,"皆のために僕は頑張ります!\n",'photo-117602761_457239211')
     HinoCount = 10
     while True:
         longpoll = VkBotLongPoll(vk_session, group_id,wait=15)
         upload=VkUpload(vk_session)
+        print('Running WeeaBot...\n')
         try:
             for event in longpoll.listen():
                 print(event.type)
@@ -96,23 +87,27 @@ def main():
                             att=upload.photo_messages(photos=image.raw)[0]
                             send_msg(int(event.chat_id),f'{title}\n{stype}, {eps} Episodes\n{url}','photo{}_{}'.format(att['owner_id'], att['id'])) 
 
-                    if event.obj.text[:7].lower() == '/getrss':
-                        data={}
-                        with open("bindings.json", 'r') as file:
-                            data = json.load(file)
-                        res = mal.get_ongoing(data[str(event.obj.from_id)])
-                        with open('subrss.json','r+') as file:
-                            lst=json.load(file)
-                            lst[str(event.obj.from_id)] = res
-                            file.seek(0) 
-                            json.dump(lst,file)
-                            file.truncate()
-                        msg="Список Ваших онгоингов получен успешно!\nДля настройки рассылки доступны следующие команды:\nComing Soon!"
-                        send_msg(int(event.chat_id),msg)
-
+                    if event.obj.text[:7].lower() == '/setrss':
+                        if not event.chat_id == 3:
+                            data={}
+                            with open("bindings.json", 'r') as file:
+                                data = json.load(file)
+                            res = mal.get_ongoing(data[str(event.obj.from_id)])
+                            with open('subrss.json','r+') as file:
+                                lst=json.load(file)
+                                lst[(str(event.obj.from_id),event.chat_id)] = res
+                                file.seek(0) 
+                                json.dump(lst,file)
+                                file.truncate()
+                            msg="Список Ваших онгоингов получен успешно!\nДля управления рассылкой доступны следующие команды:\n/updrss -\n/getrss -"
+                            send_msg(int(event.chat_id),msg)
+                        else:
+                            send_msg(int(event.chat_id),"Для подписки на рассылку отправьте команду в ЛС!")
+                              
                     if event.obj.text == "/help":
-                        message="Добро пожловать в наш уютный чатик!\nСписок команд:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\n/getrss  - СКОРО!\n"
+                        message="Добро пожловать в наш уютный чатик!\nСписок команд:\n  Global:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n"
                         send_msg(int(event.chat_id),message)
         except requests.exceptions.ReadTimeout as timeout:
+            print('timeout!')
             continue
 main()
