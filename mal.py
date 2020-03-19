@@ -25,3 +25,15 @@ def get_ongoing(usr):
             newList.append(i['title'])
             continue
     return newList
+
+def upd_ongoing(cmd,uid,titles):
+    with open('subrss.json','r+') as fsub:
+        data = json.load(fsub)
+        for title in titles:
+            if cmd == "del":
+                data[str(uid)][1].remove(title)
+            elif cmd == "add":
+                data[str(uid)][1].append(title)
+        fsub.seek(0)
+        json.dump(data, fsub)
+        fsub.truncate()
