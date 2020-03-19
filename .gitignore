@@ -1,5 +1,4 @@
 vk_config.py
 __pycache__
-bindings.json
-rss.json
-subrss.json
+*.json
+*.csv
