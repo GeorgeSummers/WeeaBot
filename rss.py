@@ -11,9 +11,11 @@ def get_feed(feed):
         writer = csv.writer(file)
         writer.writerow((fd.feed.title, feed, fd.modified,f"{fd.feed.title}.json")) 
     with open (f"{fd.feed.title}.json",'w') as file:
-        # TODO fill feedfile
-        pass
-    
+        titles =[]
+        for item in fd.entries:
+            titles.append({item['title'] : item['link']})
+        json.dump(titles,file)
+        file.truncate()
 
 def upd_feed(feed):
     fd = feedparser.parse(feed)
@@ -23,7 +25,14 @@ def upd_feed(feed):
         for row in reader:
             if row[1] == feed and row[2]!=fd.modified:
                 row[2]=fd.modified
-                # TODO rewrite json
+                with open(row[3],'r+') as ff:
+                    ff.seek(0)
+                    ff.truncate()
+                    titles =[]
+                    for item in fd.entries:
+                        titles.append({item['title'] : item['link']})
+                    json.dump(titles,file)
+                    file.truncate()
 
 def updlist(uid):
     pass
