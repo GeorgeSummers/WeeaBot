@@ -2,6 +2,7 @@ import feedparser
 import json
 import csv
 
+# TODO buffer for new titles -> listening to feed -> delivery
 # https://stackoverflow.com/questions/22211795/python-feedparser-how-can-i-check-for-new-rss-data
 
 
@@ -27,13 +28,16 @@ def upd_feed(feed):
             if row[1] == feed and row[2]!=fd.modified:
                row[2]=fd.entries[0].published      
                with open(row[3],'r+') as ff:
-                    ff.seek(0)
-                    ff.truncate()
                     titles = []
                     for item in fd.entries:
-                        titles.append({item['title'] : item['link']})
-                    json.dump(titles,file)
-                    file.truncate()
+                        if not item.published==row[2]:
+                            titles.append({item['published'] : item['link']})
+                        else: 
+                            break
+                    ff.seek(0)
+                    ff.truncate()
+                    json.dump(titles,ff)
+                    ff.truncate()
         writer.writerows(lines)
 
 
