@@ -30,7 +30,7 @@ def get_user_data(uid):
 
 
 def main():
-    send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
+    #send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
     while True:
         longpoll = VkBotLongPoll(vk_session, group_id, wait=15)
@@ -108,14 +108,34 @@ def main():
                                 file.seek(0)
                                 json.dump(lst, file)
                                 file.truncate()
-                            msg = "Список Ваших онгоингов получен успешно!\nДля управления рассылкой доступны следующие команды:\n/updrss -\n/getrss -"
+                            msg = "Список Ваших онгоингов получен успешно!\nДля управления рассылкой доступны следующие команды:\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить \n/getrss -"
                             send_msg(int(event.chat_id), msg)
                         else:
                             send_msg(
                                 int(event.chat_id), "Для подписки на рассылку отправьте команду в ЛС!")
+                    
+                    if event.obj.text[:7].lower() == '/seerss':
+                        with open('subrss.json','r') as file:
+                            data = json.load(file)
+                            msg='Вы подписаны на:\n'
+                            for title in data[str(event.obj.from_id)][1]:
+                                msg+=f'{title}\n'
+                            send_msg(int(event.chat_id),msg)
 
+                    if event.obj.text[:7].lower() == '/updrss':
+                        if not event.chat_id == 3:
+                            query=event.obj.text.split(' ')
+                            try:
+                                rss.upd_ongoing(query[1],event.obj.from_id,query[2:])
+                                send_msg(int(event.chat_id), "Список онгоингов успешно обновлен!")
+                            except:
+                                send_msg(int(event.chat_id), "Произошла ошибка! Проверьте правильность введённых данных.")
+                        else:
+                            send_msg(
+                                int(event.chat_id), "Для подписки на рассылку отправьте команду в ЛС!")
+                    
                     if event.obj.text == "/help":
-                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\n  Global:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n'
+                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\n  Global:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/seerss - посмотреть список тайтлов для рассылки\n'
                         send_msg(int(event.chat_id), message)
         except requests.exceptions.ReadTimeout as timeout:
             print('timeout!')

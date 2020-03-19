@@ -40,8 +40,24 @@ def upd_feed(feed):
                     ff.truncate()
         writer.writerows(lines)
 
+def upd_ongoing(cmd,uid,titles):
+    with open('subrss.json','r+') as fsub:
+        data = json.load(fsub)
+        for title in titles:
+            if cmd == "del":
+                try:
+                    data[str(uid)][1].remove(title)
+                except:
+                    print('meh')
+                    continue
+            elif cmd == "add":
+                data[str(uid)][1].append(title)
+
+        fsub.seek(0)
+        json.dump(data, fsub)
+        fsub.truncate()
 
 def listen():
     pass
 
-get_feed('https://ru.erai-raws.info/rss-1080')
+upd_ongoing('del',131863240,['Dorohedoro'])
