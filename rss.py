@@ -59,5 +59,3 @@ def upd_ongoing(cmd,uid,titles):
 
 def listen():
     pass
-
-upd_ongoing('del',131863240,['Dorohedoro'])

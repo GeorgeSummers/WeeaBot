@@ -33,12 +33,12 @@ def main():
     #send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
     while True:
-        longpoll = VkBotLongPoll(vk_session, group_id, wait=15)
+        longpoll = VkBotLongPoll(vk_session, group_id, wait=5)
         upload = VkUpload(vk_session)
-        print('Running WeeaBot...\n')
+        print(f'{datetime.now()}  Running WeeaBot...\n')
         try:
             for event in longpoll.listen():
-                print(event.type)
+                print(f"{datetime.now()} {event.type}")
                 print('\n')
                 if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat:
 
@@ -67,7 +67,7 @@ def main():
                                 json.dump({str(event.obj.from_id): usr}, f)
 
                     if event.obj.text.lower() == "/nakama":
-                        print('Getting nakamas')
+                        print(f'{datetime.now()} Getting nakamas')
                         strn = ''
                         with open("bindings.json", 'r') as file:
                             data = json.load(file)
@@ -82,6 +82,7 @@ def main():
                                  'https://docs.google.com/document/d/1aOsjs9C8mqcOasVvgqwKkzGDTfGHvAKgNWN0x--H6lk/edit')
 
                     if event.obj.text[:5].lower() == "/roll":
+                        print(f"{str(datetime.now())} Rolling random title...")
                         data = {}
                         with open("bindings.json", 'r') as file:
                             data = json.load(file)
@@ -98,6 +99,7 @@ def main():
                                 att['owner_id'], att['id']))
 
                     if event.obj.text[:7].lower() == '/setrss':
+                        print(f"{str(datetime.now())} Setting RSS...")
                         if not event.chat_id == 3:
                             with open("bindings.json", 'r') as file:
                                 data = json.load(file)
@@ -115,6 +117,7 @@ def main():
                                 int(event.chat_id), "Для подписки на рассылку отправьте команду в ЛС!")
                     
                     if event.obj.text[:7].lower() == '/seerss':
+                        print(f"{str(datetime.now())} Getting RSS titles...")
                         with open('subrss.json','r') as file:
                             data = json.load(file)
                             msg='Вы подписаны на:\n'
@@ -135,11 +138,12 @@ def main():
                                 int(event.chat_id), "Для подписки на рассылку отправьте команду в ЛС!")
                     
                     if event.obj.text == "/help":
+                        print(f"{str(datetime.now())} print help")
                         message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\n  Global:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/seerss - посмотреть список тайтлов для рассылки\n'
                         send_msg(int(event.chat_id), message)
         except requests.exceptions.ReadTimeout as timeout:
-            print('timeout!')
+            print(f'{datetime.now()} timeout!')
             continue    
 
-
-main()
+if __name__ == '__main__':
+    main()
