@@ -1,10 +1,13 @@
 # coding=utf8
+from config import vk_token, group_id
 import mal
-from vk_config import vk_token, group_id
+import sauce
 import rss
 import requests
+import base64
 import json
 from datetime import datetime
+import time
 from threading import Timer, Thread
 import random
 from vk_api import VkApi, VkUpload
@@ -15,15 +18,39 @@ vk_session = VkApi(token=vk_token)
 vk = vk_session.get_api()
 
 
-def send_msg(chat_id, msg, att=''):
+def send_msg(event, msg, att=''):
+    random_id = round(random.random() * 10 ** 9)
+    if event == 3:
+        vk.messages.send(
+            random_id=random_id,
+            chat_id=3,
+            message=msg,
+            attachment=att
+        )
+    elif event.from_chat:
+        print(f'replying to {event.chat_id}')
+        vk.messages.send(
+            random_id=random_id,
+            chat_id=event.chat_id,
+            message=msg,
+            attachment=att
+        )
+    elif event.from_user:
+        print(f'replying to {event.obj.from_id}')
+        vk.messages.send(
+            random_id=random_id,
+            user_id=event.obj.from_id,
+            message=msg,
+            attachment=att
+        )
+def private_msg(uid,msg, att=''):
     random_id = round(random.random() * 10 ** 9)
     vk.messages.send(
-        random_id=random_id,
-        chat_id=chat_id,
-        message=msg,
-        attachment=att
-    )
-
+            random_id=random_id,
+            user_id=uid,
+            message=msg,
+            attachment=att
+        )
 
 def get_user_data(uid):
     return vk.users.get(user_ids=int(uid))
@@ -32,24 +59,25 @@ def get_user_data(uid):
 def main():
     send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
+    start_time=time.time()
     while True:
-        longpoll = VkBotLongPoll(vk_session, group_id, wait=5)
+        longpoll = VkBotLongPoll(vk_session, group_id, wait=60)
         upload = VkUpload(vk_session)
         print(f'{datetime.now()}  Running WeeaBot...\n')
         try:
             for event in longpoll.listen():
                 print(f"{datetime.now()} {event.type}")
-                if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat:
+                if event.type == VkBotEventType.MESSAGE_NEW:
 
                     if event.obj.from_id == 38705372 and HinoCount == 10:
                         send_msg(
-                            int(event.chat_id), "МАЛ сам себя не пофиксит.", "photo-117602761_457239139")
+                            event, "МАЛ сам себя не пофиксит.", "photo-117602761_457239139")
                         HinoCount -= 1
                         if HinoCount == 0:
                             HinoCount = 10
 
                     if event.obj.text[:5].lower() == '/bind':
-                        print('Binding MAL')
+                        print(f'{datetime.now()} Binding MAL')
                         usr = event.obj.text[6:]
                         try:
                             with open("bindings.json", 'r+') as file:
@@ -58,9 +86,8 @@ def main():
                                 print(data)
                                 file.seek(0)
                                 json.dump(data, file)
-                                send_msg(int(event.chat_id),
+                                send_msg(event,
                                          "Ваш MAL привязан\n" + mal.url_mal + usr)
-                                continue
                         except:
                             with open("bindings.json", 'w') as f:
                                 json.dump({str(event.obj.from_id): usr}, f)
@@ -73,11 +100,11 @@ def main():
                             for key, val in data.items():
                                 user = get_user_data(key)
                                 strn += f"{user[0]['first_name']} {user[0]['last_name']} - {mal.url_mal + val}\n"
-                            send_msg(int(event.chat_id),
+                            send_msg(event,
                                      "Ссылки на ребят:\n%s" % strn)
 
                     if event.obj.text.lower() == "/mustw":
-                        send_msg(int(event.chat_id), "Ссылка на MUSTWATCH список:",
+                        send_msg(event, "Ссылка на MUSTWATCH список:",
                                  'https://docs.google.com/document/d/1aOsjs9C8mqcOasVvgqwKkzGDTfGHvAKgNWN0x--H6lk/edit')
 
                     if event.obj.text[:5].lower() == "/roll":
@@ -94,7 +121,7 @@ def main():
                             image = session.get(
                                 res['image_url'].split('?')[0], stream=True)
                             att = upload.photo_messages(photos=image.raw)[0]
-                            send_msg(int(event.chat_id), f'{title}\n{stype}, {eps} Episodes\n{url}', 'photo{}_{}'.format(
+                            send_msg(event, f'{title}\n{stype}, {eps} Episodes\n{url}', 'photo{}_{}'.format(
                                 att['owner_id'], att['id']))
 
                     if event.obj.text[:7].lower() == '/setrss':
@@ -110,39 +137,66 @@ def main():
                                 json.dump(lst, file)
                                 file.truncate()
                             msg = "Список Ваших онгоингов получен успешно!\nДля управления рассылкой доступны следующие команды:\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить \n/getrss -"
-                            send_msg(int(event.chat_id), msg)
+                            send_msg(event, msg)
                         else:
                             send_msg(
-                                int(event.chat_id), "Для подписки на рассылку отправьте команду в ЛС!")
+                                event, "Для подписки на рассылку отправьте команду в ЛС!")
                     
                     if event.obj.text[:7].lower() == '/seerss':
-                        print(f"{str(datetime.now())} Getting RSS titles...")
+                        print(f"{datetime.now()} Getting RSS titles...")
                         with open('subrss.json','r') as file:
                             data = json.load(file)
                             msg='Вы подписаны на:\n'
                             for title in data[str(event.obj.from_id)][1]:
                                 msg+=f'{title}\n'
-                            send_msg(int(event.chat_id),msg)
+                            send_msg(event,msg)
 
                     if event.obj.text[:7].lower() == '/updrss':
                         if not event.chat_id == 3:
                             query=event.obj.text.split(' ')
                             try:
                                 rss.upd_ongoing(query[1],event.obj.from_id,query[2:])
-                                send_msg(int(event.chat_id), "Список онгоингов успешно обновлен!")
+                                send_msg(event, "Список онгоингов успешно обновлен!")
                             except:
-                                send_msg(int(event.chat_id), "Произошла ошибка! Проверьте правильность введённых данных.")
+                                send_msg(event, "Произошла ошибка! Проверьте правильность введённых данных.")
                         else:
                             send_msg(
-                                int(event.chat_id), "Для подписки на рассылку отправьте команду в ЛС!")
+                                event, "Для подписки на рассылку отправьте команду в ЛС!")
                     
+                    if event.obj.text[:6].lower() == '/sauce':
+                        if not event.obj['attachments'] is None:
+                            print(f'{datetime.now()} Sending sauce...')
+                            with requests.Session() as session:
+                                image = session.get(
+                                    event.obj['attachments'][0]['photo']['sizes'][len(event.obj['attachments'][0]['photo']['sizes'])-1]['url'], stream=True)
+                                response = sauce.get_sauce(base64.encodebytes(image.content))
+                                title = response['anime']
+                                romanji=response['title_romaji']
+                                episode=response['episode']
+                                _,url,img = mal.search(romanji)
+                                att = upload.photo_messages(photos=img)[0]
+                                send_msg(event,f'Сурс скриншота :\n{title} || {romanji}\nEp. - {episode}\n{url}','photo{}_{}'.format(
+                                    att['owner_id'], att['id']))
+                        else: send_msg(event,'Вы скриншот забыли!')
+
                     if event.obj.text == "/help":
                         print(f"{str(datetime.now())} print help")
-                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\nGlobal:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить\n/seerss - посмотреть список тайтлов для рассылки\n'
-                        send_msg(int(event.chat_id), message)
+                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\nGlobal:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/sauce - при отправке вложения пытается определить тайтл на скриншоте. Это должен быть оригинальный необрезанный скриншот с контентом.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить\n/seerss - посмотреть список тайтлов для рассылки\n'
+                        send_msg(event, message)
+        except KeyboardInterrupt as e:
+            send_msg(3,"今はここから消えたくありません…(╥﹏╥)","photo-117602761_457239215")
+            exit(1)
         except requests.exceptions.ReadTimeout as timeout:
             print(f'{datetime.now()} timeout!')
             continue    
+        except requests.exceptions.ConnectionError as cerror:
+            print(f'{datetime.now()} {cerror}')
+            if time.time() > start_time + 30:
+                raise Exception('Unable to establish connection')
+            else:
+                time.sleep(1)
+       
 
 if __name__ == '__main__':
+    
     main()

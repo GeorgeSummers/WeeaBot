@@ -1,4 +1,4 @@
-vk_config.py
+config.py
 __pycache__
 *.json
 *.csv

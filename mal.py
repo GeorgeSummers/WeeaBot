@@ -1,4 +1,5 @@
 from jikanpy import Jikan
+import requests
 import random
 
 url_mal ='https://myanimelist.net/profile/'
@@ -26,4 +27,11 @@ def get_ongoing(usr):
             continue
     return newList
 
-
+def search(title):
+    result = jikan.search('anime',title)['results'][0]
+    title = result['title']
+    url = result['url']
+    image = result['image_url']
+    with requests.Session() as session:
+        img = session.get(image, stream=True)
+    return title,url,img.raw
