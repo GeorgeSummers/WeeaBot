@@ -30,7 +30,7 @@ def get_user_data(uid):
 
 
 def main():
-    #send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
+    send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
     while True:
         longpoll = VkBotLongPoll(vk_session, group_id, wait=5)
@@ -39,7 +39,6 @@ def main():
         try:
             for event in longpoll.listen():
                 print(f"{datetime.now()} {event.type}")
-                print('\n')
                 if event.type == VkBotEventType.MESSAGE_NEW and event.from_chat:
 
                     if event.obj.from_id == 38705372 and HinoCount == 10:
@@ -139,7 +138,7 @@ def main():
                     
                     if event.obj.text == "/help":
                         print(f"{str(datetime.now())} print help")
-                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\n  Global:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/seerss - посмотреть список тайтлов для рассылки\n'
+                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\nGlobal:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить\n/seerss - посмотреть список тайтлов для рассылки\n'
                         send_msg(int(event.chat_id), message)
         except requests.exceptions.ReadTimeout as timeout:
             print(f'{datetime.now()} timeout!')
