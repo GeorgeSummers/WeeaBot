@@ -1,8 +1,10 @@
 # coding=utf8
 from config import vk_token, group_id
+from socket import gaierror
 import mal
 import sauce
 import rss
+import logging
 import requests
 import base64
 import json
@@ -57,12 +59,18 @@ def get_user_data(uid):
 
 
 def main():
+    #logging.basicConfig(filename='weeabot.log', level=logging.INFO)
     send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
     start_time=time.time()
+    start = True
     while True:
         longpoll = VkBotLongPoll(vk_session, group_id, wait=60)
         upload = VkUpload(vk_session)
+        if start: 
+            t=Thread(target=rss.listen,args=())
+            t.start()
+            start=False
         print(f'{datetime.now()}  Running WeeaBot...\n')
         try:
             for event in longpoll.listen():
@@ -126,13 +134,14 @@ def main():
 
                     if event.obj.text[:7].lower() == '/setrss':
                         print(f"{str(datetime.now())} Setting RSS...")
+                        args=event.obj.text.split(' ')[1:]
                         if not event.chat_id == 3:
                             with open("bindings.json", 'r') as file:
                                 data = json.load(file)
                             res = mal.get_ongoing(data[str(event.obj.from_id)])
                             with open('subrss.json', 'r+') as file:
                                 lst = json.load(file)
-                                lst[str(event.obj.from_id)] = (event.chat_id, res)
+                                lst[str(event.obj.from_id)] = (res, args)
                                 file.seek(0)
                                 json.dump(lst, file)
                                 file.truncate()
@@ -143,7 +152,7 @@ def main():
                                 event, "Для подписки на рассылку отправьте команду в ЛС!")
                     
                     if event.obj.text[:7].lower() == '/seerss':
-                        print(f"{datetime.now()} Getting RSS titles...")
+                        print(f"{datetime.now()} setting RSS titles...")
                         with open('subrss.json','r') as file:
                             data = json.load(file)
                             msg='Вы подписаны на:\n'
@@ -170,7 +179,7 @@ def main():
                                 image = session.get(
                                     event.obj['attachments'][0]['photo']['sizes'][len(event.obj['attachments'][0]['photo']['sizes'])-1]['url'], stream=True)
                                 response = sauce.get_sauce(base64.encodebytes(image.content))
-                                title = response['anime']
+                                title = response['title_native']
                                 romanji=response['title_romaji']
                                 episode=response['episode']
                                 _,url,img = mal.search(romanji)
@@ -189,14 +198,29 @@ def main():
         except requests.exceptions.ReadTimeout as timeout:
             print(f'{datetime.now()} timeout!')
             continue    
-        except requests.exceptions.ConnectionError as cerror:
+        except (requests.exceptions.ConnectionError,gaierror) as cerror:
             print(f'{datetime.now()} {cerror}')
-            if time.time() > start_time + 30:
+            if time.time() > start_time + 120:
                 raise Exception('Unable to establish connection')
             else:
                 time.sleep(1)
-       
+
+def notify(uid=None):
+    if uid is None:
+        with open('subrss.json','r') as sfile:
+            subs = json.load(sfile)
+            for key,val in subs.items():
+                for feed in val[1]:
+                    msg=f'{feed}:\n'
+                    with open(f'{feed}.json','r') as file:
+                        titles = json.load(file)
+                        res = {k: v for d in titles for k, v in d.items()}
+                        for item in val[0]:
+                            for tkey,tval in res.items(): 
+                                if item in tkey:
+                                    msg+=f'{tkey} - {tval}\n'
+                    private_msg(int(key),msg)
+            
 
 if __name__ == '__main__':
-    
     main()
