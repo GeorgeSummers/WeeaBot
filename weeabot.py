@@ -60,7 +60,7 @@ def get_user_data(uid):
 
 def main():
     #logging.basicConfig(filename='weeabot.log', level=logging.INFO)
-    send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
+    #send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
     start_time=time.time()
     start = True
@@ -164,14 +164,26 @@ def main():
                         if not event.chat_id == 3:
                             query=event.obj.text.split(' ')
                             try:
-                                rss.upd_ongoing(query[1],event.obj.from_id,query[2:])
+                                rss.upd_data(query[1],event.obj.from_id,query[2:])
                                 send_msg(event, "Список онгоингов успешно обновлен!")
                             except:
                                 send_msg(event, "Произошла ошибка! Проверьте правильность введённых данных.")
                         else:
                             send_msg(
                                 event, "Для подписки на рассылку отправьте команду в ЛС!")
-                    
+                   
+                    if event.obj.text[:4].lower() == '/rss': #feck
+                        query = event.obj.text.split(' ')
+                        if query[1] == 'new':
+                            title = rss.get_feed(query[2])
+                            send_msg(event,f'Канал {title} успешно добвлен!')
+                        elif query[2] == 'sub':
+                            rss.upd_data(query[2],event.obj.from_id,query[2])
+                            send_msg(event,'Теперь вы подписаны на данный канал!')
+                        elif query[2] == 'unsub':
+                            rss.upd_data(query[2],event.obj.from_id,query[2])
+                            send_msg(event,'Вы были отписаны от рассылок с канала!')
+
                     if event.obj.text[:6].lower() == '/sauce':
                         if not event.obj['attachments'] is None:
                             print(f'{datetime.now()} Sending sauce...')
@@ -190,7 +202,7 @@ def main():
 
                     if event.obj.text == "/help":
                         print(f"{str(datetime.now())} print help")
-                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\nGlobal:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/sauce - при отправке вложения пытается определить тайтл на скриншоте. Это должен быть оригинальный необрезанный скриншот с контентом.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить\n/seerss - посмотреть список тайтлов для рассылки\n'
+                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\nGlobal:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/sauce - при отправке вложения пытается определить тайтл на скриншоте. Это должен быть оригинальный необрезанный скриншот с контентом.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\n/rss <new, sub, unsub> [arg] - редактировать список каналов\n-new <link> - добавить новый канал по ссылке\n-sub <name> - подписаться на канал\n-unsub <name> - отписаться от канала\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить\n/seerss - посмотреть список тайтлов для рассылки\n'
                         send_msg(event, message)
         except KeyboardInterrupt as e:
             send_msg(3,"今はここから消えたくありません…(╥﹏╥)","photo-117602761_457239215")
@@ -211,16 +223,16 @@ def notify(uid=None):
             subs = json.load(sfile)
             for key,val in subs.items():
                 for feed in val[1]:
-                    msg=f'{feed}:\n'
+                    msg=f'{feed} >'
                     with open(f'{feed}.json','r') as file:
                         titles = json.load(file)
                         res = {k: v for d in titles for k, v in d.items()}
                         for item in val[0]:
                             for tkey,tval in res.items(): 
                                 if item in tkey:
-                                    msg+=f'{tkey} - {tval}\n'
-                    private_msg(int(key),msg)
-            
+                                    msg+=f'\n{tkey} - {tval}'
+                    if not msg.split('>')[1] =='':
+                        private_msg(int(key),msg)
 
 if __name__ == '__main__':
     main()

@@ -1,10 +1,9 @@
 import feedparser
 import weeabot
-import sched, time
+import time
 import json
 import csv
 
-# https://stackoverflow.com/questions/22211795/python-feedparser-how-can-i-check-for-new-rss-data
 
 def get_feed(feed):
     fd = feedparser.parse(feed)
@@ -17,15 +16,18 @@ def get_feed(feed):
             titles.append({item['title'] : item['link']})
         json.dump(titles,file)
         file.truncate()
+    return fd.feed.title
 
-def upd_feeds(sc):
+def upd_feeds():
     with open('datrss.csv','r+',newline="") as file:
         reader = csv.reader(file)
         writer=csv.writer(file, delimiter=',')
         lines = list(reader)
+        check= False
         for row in lines:
             fd = feedparser.parse(row[1])
-            if row[2]!=fd.entries[0].published:      
+            if row[2]!=fd.entries[0].published:   
+               check = True   
                with open(row[3],'r+') as ff:
                    titles = []
                    for item in fd.entries:
@@ -37,14 +39,14 @@ def upd_feeds(sc):
                    ff.truncate()
                    json.dump(titles,ff)
                    ff.truncate()
-               weeabot.notify()
-            row[2]=fd.entries[0].published
+               row[2]=fd.entries[0].published
+        if check:
+            weeabot.notify()
         file.seek(0)
         file.truncate()
         writer.writerows(lines)
-        sc.enter(1800,1,upd_feeds,(sc,))
 
-def upd_ongoing(cmd,uid,titles):
+def upd_data(cmd,uid,titles):
     with open('subrss.json','r+') as fsub:
         data = json.load(fsub)
         for title in titles:
@@ -56,12 +58,20 @@ def upd_ongoing(cmd,uid,titles):
             elif cmd == "add":
                 data[str(uid)][0].append(title)
                 data[str(uid)][0] = sorted(data[str(uid)][0])
+            elif cmd == 'sub':                  #feck
+                data[str(uid)][1].append(title)
+            elif cmd == 'unsub':
+                try:
+                    data[str(uid)][1].remove(f'{title} RSS')
+                except:
+                    continue
 
         fsub.seek(0)
         json.dump(data, fsub)
         fsub.truncate()
 
 def listen():
-    s = sched.scheduler(time.time, time.sleep)
-    s.enter(1800,1,upd_feeds,(s,))
-    s.run()
+    start_time=time.time()
+    while True:
+        upd_feeds()
+        time.sleep(1800.0 - ((time.time()-start_time) % 1800.0))
