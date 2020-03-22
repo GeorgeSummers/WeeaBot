@@ -62,7 +62,6 @@ def main():
     #logging.basicConfig(filename='weeabot.log', level=logging.INFO)
     #send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
-    start_time=time.time()
     start = True
     while True:
         longpoll = VkBotLongPoll(vk_session, group_id, wait=60)
@@ -211,8 +210,9 @@ def main():
             print(f'{datetime.now()} timeout!')
             continue    
         except (requests.exceptions.ConnectionError,gaierror) as cerror:
+            start_time=time.time()
             print(f'{datetime.now()} {cerror}')
-            if time.time() > start_time + 120:
+            if time.time() > start_time + 120.0:
                 raise Exception('Unable to establish connection')
             else:
                 time.sleep(1)
