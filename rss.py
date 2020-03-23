@@ -44,7 +44,8 @@ def upd_feeds():
             weeabot.notify()
         file.seek(0)
         file.truncate()
-        writer.writerows(lines)
+        newlines=[x for x in lines if x != []]
+        writer.writerows(newlines)
 
 def upd_data(cmd,uid,titles):
     with open('subrss.json','r+') as fsub:
