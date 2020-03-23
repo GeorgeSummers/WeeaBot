@@ -1,6 +1,6 @@
 # coding=utf8
 from config import vk_token, group_id
-from socket import gaierror
+import socket,urllib3
 import mal
 import sauce
 import rss
@@ -14,6 +14,7 @@ from threading import Timer, Thread
 import random
 from vk_api import VkApi, VkUpload
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
+
 
 vk_session = VkApi(token=vk_token)
 
@@ -59,19 +60,24 @@ def get_user_data(uid):
 
 
 def main():
+    global vk_session,vk
+
     #logging.basicConfig(filename='weeabot.log', level=logging.INFO)
     #send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
     start = True
     while True:
-        longpoll = VkBotLongPoll(vk_session, group_id, wait=60)
-        upload = VkUpload(vk_session)
-        if start: 
-            t=Thread(target=rss.listen,args=())
-            t.start()
-            start=False
-        print(f'{datetime.now()}  Running WeeaBot...\n')
         try:
+            vk_session = VkApi(token=vk_token)
+            vk = vk_session.get_api()
+            longpoll = VkBotLongPoll(vk_session, group_id, wait=60)
+            upload = VkUpload(vk_session)
+            if start: 
+                t=Thread(target=rss.listen,args=())
+                t.start()
+                start=False
+            print(f'{datetime.now()}  Running WeeaBot...\n')
+
             for event in longpoll.listen():
                 print(f"{datetime.now()} {event.type}")
                 if event.type == VkBotEventType.MESSAGE_NEW:
@@ -209,13 +215,13 @@ def main():
         except requests.exceptions.ReadTimeout as timeout:
             print(f'{datetime.now()} timeout!')
             continue    
-        except (requests.exceptions.ConnectionError,gaierror) as cerror:
+        except (requests.exceptions.ConnectionError,socket.gaierror,urllib3.exceptions.NewConnectionError,urllib3.exceptions.ProtocolError,TimeoutError) as cerror:
             start_time=time.time()
             print(f'{datetime.now()} {cerror}')
-            if time.time() > start_time + 120.0:
-                raise Exception('Unable to establish connection')
-            else:
-                time.sleep(1)
+#           if time.time() > start_time + 30.0:
+#              raise Exception('Unable to establish connection')
+#           else:
+            time.sleep(1)
 
 def notify(uid=None):
     if uid is None:

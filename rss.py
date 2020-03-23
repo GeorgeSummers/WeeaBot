@@ -28,7 +28,7 @@ def upd_feeds():
             fd = feedparser.parse(row[1])
             if row[2]!=fd.entries[0].published:   
                check = True   
-               with open(row[3],'r+') as ff:
+               with open(f'{row[0]}.json','r+') as ff:
                    titles = []
                    for item in fd.entries:
                        if not item.published==row[2]:
