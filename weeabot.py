@@ -10,7 +10,6 @@ import base64
 import json
 from datetime import datetime
 import time
-from threading import Timer, Thread
 import random
 from vk_api import VkApi, VkUpload
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
@@ -121,7 +120,6 @@ def main():
     #logging.basicConfig(filename='weeabot.log', level=logging.INFO)
     #send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
-    start = True
     F=True
     while True:
         try:
@@ -129,12 +127,9 @@ def main():
             vk = vk_session.get_api()
             longpoll = VkBotLongPoll(vk_session, group_id, wait=60)
             upload = VkUpload(vk_session)
-            if start: 
-                t=Thread(target=rss.listen,args=())
-                t.start()
-                start=False
             print(f'{datetime.now()}  Running WeeaBot...\n')
-
+            if rss.listening:
+                rss.start_listen()
             for event in longpoll.listen():
                 print(f"{datetime.now()} {event.type}")
                 if event.type == VkBotEventType.MESSAGE_NEW:
@@ -233,16 +228,13 @@ def main():
 
                     if event.obj.from_id == 131863240 and event.obj.text == "/kill":
                         private_msg(131863240,"Terminating WeeaBot...")
-                        print("join")
-                        t.join()
-                        print('exit')
-                        sys.exit(1)
+                        rss.stop_listen()
+                        sys.exit()
                        
 
-        except KeyboardInterrupt as e:
+        except (KeyboardInterrupt,SystemExit) as e:
             send_msg(3,"今はここから消えたくありません…(╥﹏╥)","photo-117602761_457239215")
-            t.join()
-            sys.exit(1)
+            sys.exit()
         except requests.exceptions.ReadTimeout as timeout:
             print(f'{datetime.now()} timeout!')
             continue    
@@ -253,8 +245,6 @@ def main():
 #              raise Exception('Unable to establish connection')
 #           else:
             time.sleep(5)
-        except SystemExit as e:
-            sys.exit(e)
 
 def notify(uid=None):
     if uid is None:

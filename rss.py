@@ -1,9 +1,11 @@
 import feedparser
 import weeabot
-import time
+import time, signal
 import json
 import csv
+from threading import Thread,Event
 
+listening:bool = False
 
 def get_feed(feed):
     fd = feedparser.parse(feed)
@@ -70,9 +72,25 @@ def upd_data(cmd,uid,titles):
         fsub.seek(0)
         json.dump(data, fsub)
         fsub.truncate()
-
 def listen():
     start_time=time.time()
-    while True:
+    while not pill2kill.is_set():
         upd_feeds()
-        time.sleep(1800.0 - ((time.time()-start_time) % 1800.0))
+        exit.wait(1800.0 - ((time.time()-start_time) % 1800.0))
+        
+pill2kill = Event()
+t=Thread(target=listen,args=())
+
+def start_listen():
+    global listening
+    listening=True
+    t.start()
+
+def stop_listen():
+    global listening
+    if listening:
+        listening=False
+        pill2kill.set()
+        t.join()
+
+
