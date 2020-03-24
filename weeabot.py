@@ -82,12 +82,14 @@ def main():
                 print(f"{datetime.now()} {event.type}")
                 if event.type == VkBotEventType.MESSAGE_NEW:
 
-                    if event.obj.from_id == 38705372 and HinoCount == 10:
-                        send_msg(
-                            event, "МАЛ сам себя не пофиксит.", "photo-117602761_457239139")
+                    if event.obj.from_id == 38705372: 
+                        if HinoCount == 10:
+                            send_msg(
+                                event, "МАЛ сам себя не пофиксит.", "photo-117602761_457239139")
+                        else:
+                            if HinoCount == 0:
+                                HinoCount = 10
                         HinoCount -= 1
-                        if HinoCount == 0:
-                            HinoCount = 10
 
                     if event.obj.text[:5].lower() == '/bind':
                         print(f'{datetime.now()} Binding MAL')
@@ -209,6 +211,11 @@ def main():
                         print(f"{str(datetime.now())} print help")
                         message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\nGlobal:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/sauce - при отправке вложения пытается определить тайтл на скриншоте. Это должен быть оригинальный необрезанный скриншот с контентом.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\n/rss <new, sub, unsub> [arg] - редактировать список каналов\n-new <link> - добавить новый канал по ссылке\n-sub <name> - подписаться на канал\n-unsub <name> - отписаться от канала\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить\n/seerss - посмотреть список тайтлов для рассылки\n'
                         send_msg(event, message)
+                    
+                    if event.obj.from_id == 131863240 and event.obj.text == "/kill":
+                        private_msg(131863240,"Terminating WeeaBot...")
+                        exit(1)
+
         except KeyboardInterrupt as e:
             send_msg(3,"今はここから消えたくありません…(╥﹏╥)","photo-117602761_457239215")
             exit(1)
@@ -221,7 +228,7 @@ def main():
 #           if time.time() > start_time + 30.0:
 #              raise Exception('Unable to establish connection')
 #           else:
-            time.sleep(1)
+            time.sleep(3)
 
 def notify(uid=None):
     if uid is None:

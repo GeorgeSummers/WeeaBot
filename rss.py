@@ -9,7 +9,7 @@ def get_feed(feed):
     fd = feedparser.parse(feed)
     with open('datrss.csv','a',newline="") as file:
         writer = csv.writer(file, delimiter=',')
-        writer.writerow((fd.feed.title, feed, fd.entries[0].published,f"{fd.feed.title}.json")) 
+        writer.writerow((fd.feed.title, feed, fd.entries[0].published,fd.entries[0].published)) 
     with open (f"{fd.feed.title}.json",'w') as file:
         titles = []
         for item in fd.entries:
@@ -26,7 +26,7 @@ def upd_feeds():
         check= False
         for row in lines:
             fd = feedparser.parse(row[1])
-            if row[2]!=fd.entries[0].published:   
+            if not row[2] == fd.entries[0].published:   
                check = True   
                with open(f'{row[0]}.json','r+') as ff:
                    titles = []
