@@ -17,9 +17,9 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
 
 vk_session = VkApi(token=vk_token)
-
 vk = vk_session.get_api()
-
+longpoll = VkBotLongPoll(vk_session, group_id, wait=60)
+upload = VkUpload(vk_session)
 
 def send_msg(event, msg, att=''):
     random_id = round(random.random() * 10 ** 9)
@@ -58,14 +58,71 @@ def private_msg(uid,msg, att=''):
 def get_user_data(uid):
     return vk.users.get(user_ids=int(uid))
 
+def bind(event):
+    usr = event.obj.text[6:]
+    try:
+        with open("bindings.json", 'r+') as file:
+            data = json.load(file)
+            data[str(event.obj.from_id)] = usr
+            print(data)
+            file.seek(0)
+            json.dump(data, file)
+            send_msg(event,
+                        "Ваш MAL привязан\n" + mal.url_mal + usr)
+    except:
+        with open("bindings.json", 'w') as f:
+            json.dump({str(event.obj.from_id): usr}, f)
+
+def get_nakamas(event):
+    strn = ''
+    with open("bindings.json", 'r') as file:
+        data = json.load(file)
+        for key, val in data.items():
+            user = get_user_data(key)
+            strn += f"{user[0]['first_name']} {user[0]['last_name']} - {mal.url_mal + val}\n"
+        send_msg(event,
+                    "Ссылки на ребят:\n%s" % strn)
+
+def roll(event):
+    data = {}
+    with open("bindings.json", 'r') as file:
+        data = json.load(file)
+    res = mal.roll_ptw(data[str(event.obj.from_id)])
+    title = res['title']
+    stype = res['type']
+    eps = res['total_episodes']
+    url = res['url']
+    with requests.Session() as session:
+        image = session.get(
+            res['image_url'].split('?')[0], stream=True)
+        att = upload.photo_messages(photos=image.raw)[0]
+        send_msg(event, f'{title}\n{stype}, {eps} Episodes\n{url}', 'photo{}_{}'.format(
+            att['owner_id'], att['id']))
+
+def sauce(event):
+    if not event.obj['attachments'] is None:
+        print(f'{datetime.now()} Sending sauce...')
+        with requests.Session() as session:
+            image = session.get(
+                event.obj['attachments'][0]['photo']['sizes'][len(event.obj['attachments'][0]['photo']['sizes'])-1]['url'], stream=True)
+            response = sauce.get_sauce(base64.encodebytes(image.content))
+            title = response['title_native']
+            romanji=response['title_romaji']
+            episode=response['episode']
+            _,url,img = mal.search(romanji)
+            att = upload.photo_messages(photos=img)[0]
+            send_msg(event,f'Сурс скриншота :\n{title} || {romanji}\nEp. - {episode}\n{url}','photo{}_{}'.format(
+                att['owner_id'], att['id']))
+    else: send_msg(event,'Вы скриншот забыли!')
 
 def main():
-    global vk_session,vk
+    global vk_session,vk,longpoll,upload
 
     #logging.basicConfig(filename='weeabot.log', level=logging.INFO)
     #send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
     start = True
+    F=True
     while True:
         try:
             vk_session = VkApi(token=vk_token)
@@ -93,30 +150,11 @@ def main():
 
                     if event.obj.text[:5].lower() == '/bind':
                         print(f'{datetime.now()} Binding MAL')
-                        usr = event.obj.text[6:]
-                        try:
-                            with open("bindings.json", 'r+') as file:
-                                data = json.load(file)
-                                data[str(event.obj.from_id)] = usr
-                                print(data)
-                                file.seek(0)
-                                json.dump(data, file)
-                                send_msg(event,
-                                         "Ваш MAL привязан\n" + mal.url_mal + usr)
-                        except:
-                            with open("bindings.json", 'w') as f:
-                                json.dump({str(event.obj.from_id): usr}, f)
+                        bind(event)
 
                     if event.obj.text.lower() == "/nakama":
                         print(f'{datetime.now()} Getting nakamas')
-                        strn = ''
-                        with open("bindings.json", 'r') as file:
-                            data = json.load(file)
-                            for key, val in data.items():
-                                user = get_user_data(key)
-                                strn += f"{user[0]['first_name']} {user[0]['last_name']} - {mal.url_mal + val}\n"
-                            send_msg(event,
-                                     "Ссылки на ребят:\n%s" % strn)
+                        get_nakamas(event)
 
                     if event.obj.text.lower() == "/mustw":
                         send_msg(event, "Ссылка на MUSTWATCH список:",
@@ -124,20 +162,7 @@ def main():
 
                     if event.obj.text[:5].lower() == "/roll":
                         print(f"{str(datetime.now())} Rolling random title...")
-                        data = {}
-                        with open("bindings.json", 'r') as file:
-                            data = json.load(file)
-                        res = mal.roll_ptw(data[str(event.obj.from_id)])
-                        title = res['title']
-                        stype = res['type']
-                        eps = res['total_episodes']
-                        url = res['url']
-                        with requests.Session() as session:
-                            image = session.get(
-                                res['image_url'].split('?')[0], stream=True)
-                            att = upload.photo_messages(photos=image.raw)[0]
-                            send_msg(event, f'{title}\n{stype}, {eps} Episodes\n{url}', 'photo{}_{}'.format(
-                                att['owner_id'], att['id']))
+                        roll(event)
 
                     if event.obj.text[:7].lower() == '/setrss':
                         print(f"{str(datetime.now())} Setting RSS...")
@@ -192,29 +217,25 @@ def main():
                             send_msg(event,'Вы были отписаны от рассылок с канала!')
 
                     if event.obj.text[:6].lower() == '/sauce':
-                        if not event.obj['attachments'] is None:
-                            print(f'{datetime.now()} Sending sauce...')
-                            with requests.Session() as session:
-                                image = session.get(
-                                    event.obj['attachments'][0]['photo']['sizes'][len(event.obj['attachments'][0]['photo']['sizes'])-1]['url'], stream=True)
-                                response = sauce.get_sauce(base64.encodebytes(image.content))
-                                title = response['title_native']
-                                romanji=response['title_romaji']
-                                episode=response['episode']
-                                _,url,img = mal.search(romanji)
-                                att = upload.photo_messages(photos=img)[0]
-                                send_msg(event,f'Сурс скриншота :\n{title} || {romanji}\nEp. - {episode}\n{url}','photo{}_{}'.format(
-                                    att['owner_id'], att['id']))
-                        else: send_msg(event,'Вы скриншот забыли!')
+                        sauce(event)
 
                     if event.obj.text == "/help":
                         print(f"{str(datetime.now())} print help")
                         message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\nGlobal:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/sauce - при отправке вложения пытается определить тайтл на скриншоте. Это должен быть оригинальный необрезанный скриншот с контентом.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\n/rss <new, sub, unsub> [arg] - редактировать список каналов\n-new <link> - добавить новый канал по ссылке\n-sub <name> - подписаться на канал\n-unsub <name> - отписаться от канала\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить\n/seerss - посмотреть список тайтлов для рассылки\n'
                         send_msg(event, message)
                     
+                    if event.obj.text[:6] == 'F' and event.chat_id == 3:
+                        if F:
+                            send_msg(event,"F",'photo-117602761_457239232')
+                            F=False
+                    else: F = True
+
+
                     if event.obj.from_id == 131863240 and event.obj.text == "/kill":
                         private_msg(131863240,"Terminating WeeaBot...")
+                        print("join")
                         t.join()
+                        print('exit')
                         sys.exit(1)
                        
 
