@@ -98,7 +98,7 @@ def roll(event):
         send_msg(event, f'{title}\n{stype}, {eps} Episodes\n{url}', 'photo{}_{}'.format(
             att['owner_id'], att['id']))
 
-def sauce(event):
+def screen_search(event):
     if not event.obj['attachments'] is None:
         print(f'{datetime.now()} Sending sauce...')
         with requests.Session() as session:
@@ -118,7 +118,7 @@ def main():
     global vk_session,vk,longpoll,upload
 
     #logging.basicConfig(filename='weeabot.log', level=logging.INFO)
-    #send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
+    send_msg(3, "皆のために僕は頑張ります!\n", 'photo-117602761_457239211')
     HinoCount = 10
     F=True
     while True:
@@ -212,7 +212,7 @@ def main():
                             send_msg(event,'Вы были отписаны от рассылок с канала!')
 
                     if event.obj.text[:6].lower() == '/sauce':
-                        sauce(event)
+                        screen_search(event)
 
                     if event.obj.text == "/help":
                         print(f"{str(datetime.now())} print help")

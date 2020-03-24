@@ -11,7 +11,7 @@ def get_feed(feed):
     fd = feedparser.parse(feed)
     with open('datrss.csv','a',newline="") as file:
         writer = csv.writer(file, delimiter=',')
-        writer.writerow((fd.feed.title, feed, fd.entries[0].published,fd.entries[0].published)) 
+        writer.writerow((fd.feed.title, feed, fd.entries[0].published)) 
     with open (f"{fd.feed.title}.json",'w') as file:
         titles = []
         for item in fd.entries:
@@ -77,7 +77,7 @@ def listen():
     while not pill2kill.is_set():
         upd_feeds()
         exit.wait(1800.0 - ((time.time()-start_time) % 1800.0))
-        
+
 pill2kill = Event()
 t=Thread(target=listen,args=())
 
