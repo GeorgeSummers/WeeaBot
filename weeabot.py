@@ -4,7 +4,7 @@ import socket,urllib3
 import mal
 import sauce
 import rss
-import logging
+import logging, os, sys
 import requests
 import base64
 import json
@@ -214,11 +214,14 @@ def main():
                     
                     if event.obj.from_id == 131863240 and event.obj.text == "/kill":
                         private_msg(131863240,"Terminating WeeaBot...")
-                        exit(1)
+                        t.join()
+                        sys.exit(1)
+                       
 
         except KeyboardInterrupt as e:
             send_msg(3,"今はここから消えたくありません…(╥﹏╥)","photo-117602761_457239215")
-            exit(1)
+            t.join()
+            sys.exit(1)
         except requests.exceptions.ReadTimeout as timeout:
             print(f'{datetime.now()} timeout!')
             continue    
@@ -228,7 +231,9 @@ def main():
 #           if time.time() > start_time + 30.0:
 #              raise Exception('Unable to establish connection')
 #           else:
-            time.sleep(3)
+            time.sleep(5)
+        except SystemExit as e:
+            sys.exit(e)
 
 def notify(uid=None):
     if uid is None:
