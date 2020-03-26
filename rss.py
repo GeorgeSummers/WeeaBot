@@ -51,23 +51,26 @@ def upd_feeds():
 
 def upd_data(cmd,uid,titles):
     with open('subrss.json','r+') as fsub:
-        data = json.load(fsub)
-        for title in titles:
-            if cmd == "del":
-                try:
-                    data[str(uid)][0].remove(title)
-                except:
-                    continue
-            elif cmd == "add":
-                data[str(uid)][0].append(title)
-                data[str(uid)][0] = sorted(data[str(uid)][0])
-            elif cmd == 'sub':                  #feck
-                data[str(uid)][1].append(title)
-            elif cmd == 'unsub':
-                try:
-                    data[str(uid)][1].remove(f'{title} RSS')
-                except:
-                    continue
+        with open('datrss.csv','r') as file:
+            data = json.load(fsub)
+            reader = csv.reader(file)
+            for title in titles:
+                if cmd == "del":
+                    try:
+                        data[str(uid)][0].remove(title)
+                    except:
+                        continue
+                elif cmd == "add":
+                    data[str(uid)][0].append(title)
+                    data[str(uid)][0] = sorted(data[str(uid)][0])
+                elif cmd == 'sub':                 
+                    lines = list(reader)    #feck
+                    data[str(uid)][1].append(title)
+                elif cmd == 'unsub':
+                    try:
+                        data[str(uid)][1].remove(f'{title} RSS')
+                    except:
+                        continue
 
         fsub.seek(0)
         json.dump(data, fsub)
@@ -76,7 +79,7 @@ def listen():
     start_time=time.time()
     while not pill2kill.is_set():
         upd_feeds()
-        exit.wait(1800.0 - ((time.time()-start_time) % 1800.0))
+        pill2kill.wait(1800.0 - ((time.time()-start_time) % 1800.0))
 
 pill2kill = Event()
 t=Thread(target=listen,args=())
