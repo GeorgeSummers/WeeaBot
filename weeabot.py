@@ -98,12 +98,25 @@ def roll(event):
         send_msg(event, f'{title}\n{stype}, {eps} Episodes\n{url}', 'photo{}_{}'.format(
             att['owner_id'], att['id']))
 
+def derangement(keys):
+    if len(keys) == 1:
+        raise ValueError('No derangement is possible')
+
+    new_keys = list(keys)
+
+    while any(x == y for x, y in zip(keys, new_keys)):
+        random.shuffle(new_keys)
+
+    return new_keys
+
+def shuffle_dict(d):
+    return { x: d[y] for x, y in zip(d, derangement(d)) }
 
 def main():
     global vk_session,vk,longpoll,upload
 
     #logging.basicConfig(filename='weeabot.log', level=logging.INFO)
-    send_msg(3, "Minna no tame ni boku wa ganbarimasu!\n", 'photo-117602761_457239211')
+    #send_msg(3, "Minna no tame ni boku wa ganbarimasu!\n", 'photo-117602761_457239211')
     HinoCount = 10
     F=True
     while True:
@@ -214,7 +227,7 @@ def main():
 
                     if event.obj.text == "/help":
                         print(f"{str(datetime.now())} print help")
-                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\nGlobal:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/sauce - при отправке вложения пытается определить тайтл на скриншоте. Это должен быть оригинальный необрезанный скриншот с контентом.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\n/rss <new, sub, unsub> [arg] - редактировать список каналов\n-new <link> - добавить новый канал по ссылке\n-sub <name> - подписаться на канал\n-unsub <name> - отписаться от канала\nDirect:\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить\n/seerss - посмотреть список тайтлов для рассылки\n'
+                        message = 'Добро пожловать в наш уютный чатик!\nСписок команд:\nGlobal:\n/help - помощь.\n/bind <MAL-username> - привязка MAL-аккаунта к беседе по имени профиля.\n/nakama - Получить список МАЛа собеседников.\n/shuffle - получить результат лотереи тайтлов\n/sauce - при отправке вложения пытается определить тайтл на скриншоте. Это должен быть оригинальный необрезанный скриншот с контентом.\n/mustw - (пока что) ссылка на MUSTWATCH список\n/roll - Рандомный тайтл из Вашего ПТВ\n/rss <new, sub, unsub> [arg] - редактировать список каналов\n-new <link> - добавить новый канал по ссылке\n-sub <name> - подписаться на канал\n-unsub <name> - отписаться от канала\nDirect:\n/shuffle <title> - добвить тайтл к лотерее\n/setrss  - Получить список оноингов для рассылок (только в ЛС)\n/updrss <add/del> [titles] - обновить список тайтлов, add - дбавить, del удалить\n/seerss - посмотреть список тайтлов для рассылки\n'
                         send_msg(event, message)
                     
                     if event.obj.text == 'F' and event.chat_id == 3:
@@ -229,14 +242,48 @@ def main():
                     if any(word in event.obj.text for word in culturedict):
                         send_msg(event,"",'photo-117602761_457239235')
 
-                    if event.obj.from_id == 131863240 and event.obj.text == "/kill":
-                        private_msg(131863240,"Terminating WeeaBot...")
-                        rss.stop_listen()
-                        sys.exit()
-                       
+
+                    if event.obj.text[:8] == '/shuffle':
+                        with open('shuffle.json','r+') as file:
+                            sl : dict = json.load(file)
+                            if event.chat_id == 3 and event.obj.text == '/shuffle':
+                                if not len(sl) < 2:
+                                    print('shuffle')
+                                    msg ='Результат лотереи:\n'
+                                    for key, val in shuffle_dict(sl).items():
+                                        ufn = get_user_data(key)[0]['first_name']
+                                        uln = get_user_data(key)[0]['last_name']
+                                        msg +=f'{ufn} {uln} - {val}\n'
+                                    send_msg(event,msg)
+                                    file.seek(0)
+                                    file.truncate()
+                                    json.dumps('{}')
+                                    file.truncate()    
+                                else:
+                                    send_msg(event,'Недостаточно участников!')
+                            elif event.from_user:                         
+                                sl[str(event.obj.from_id)] = event.obj.text[8:]
+                                file.seek(0)
+                                json.dump(sl, file)
+                                file.truncate()
+
+
+                    if event.obj.from_id == admin:
+                       if event.obj.text == "/kill": 
+                            private_msg(admin,"Terminating WeeaBot...")
+                            rss.stop_listen()
+                            sys.exit() 
+                        
+                       if event.obj.text== '/gorss':
+                            rss.start_listen()
+                            private_msg(admin, 'RSS thread started...')
+                        
+                       if event.obj.text== '/stoprss':
+                            rss.stop_listen()
+                            private_msg(admin, 'RSS thread stopped...')
 
         except (KeyboardInterrupt,SystemExit) as e:
-            send_msg(3,"Ima wa koko kara kaetakuarimasen…(╥﹏╥)","photo-117602761_457239215")
+            #send_msg(3,"Ima wa koko kara kaetakuarimasen…(╥﹏╥)","photo-117602761_457239215")
             sys.exit()
         except requests.exceptions.ReadTimeout as timeout:
             print(f'{datetime.now()} timeout!')
