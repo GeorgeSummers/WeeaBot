@@ -1,6 +1,6 @@
 # coding=utf8
 
-import logging, coloredlogs
+import logging
 import logging.config
 
 
@@ -10,8 +10,7 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 from config import *
 import socket,urllib3
-import mal,sauce,rss,translator
-import colorama
+import mal,sauce,rss
 import re
 import os, sys
 import requests
@@ -24,7 +23,6 @@ from vk_api import VkApi, VkUpload, exceptions
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from vk_api.utils import get_random_id
 
-colorama.init(autoreset=True)
 
 vk_session = VkApi(token=vk_token)
 vk = vk_session.get_api()
