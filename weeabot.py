@@ -142,15 +142,7 @@ def main():
             for event in longpoll.listen(): 
                 logger.info(event.type if not event.type == VkBotEventType.MESSAGE_NEW else f'{event.type} \nfrom {list(get_user_data(event.obj.from_id)[0].values())[:3]}')
                 if event.type == VkBotEventType.MESSAGE_NEW:
-
-
-#                    if not event.obj.attachments == []:
-#                        if event.obj.attachments[0]['type'] =='audio_message':
-#                            with requests.Session() as session:
-#                                msg = session.get(event.obj.attachments[0]['audio_message']['link_mp3'], stream=True)
-#                            resp = translator.translate(msg)
-#                           send_msg(event,resp)
-                        
+                    
                     if event.obj.from_id == 255017427: 
                         if vityaCount == 100:
                             send_msg(
